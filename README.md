@@ -19,7 +19,7 @@ This project showcases how to integrate with Dedalus Labs' unified AI gateway, w
 
 ### Prerequisites
 
-- Node.js 18+ 
+- Node.js 18+
 - Dedalus Labs API key ([Get one here](https://www.dedaluslabs.ai/dashboard/servers))
 
 ### Installation
@@ -54,8 +54,13 @@ npm start
 # Advanced demo - MCP integration and tools
 npm run demo
 
-# Development mode with auto-reload
-npm run dev
+# Cat Facts demo with Danny's MCP server
+npm run cat-facts
+
+# Run specific examples
+node examples/basic-usage.js
+node examples/mcp-integration.js
+node examples/cat-facts-demo.js
 ```
 
 ## Project Structure
@@ -73,21 +78,58 @@ npm run dev
 
 ## Usage Examples
 
-### Basic Text Completion
+### 🔧 Advanced Features (`src/demo.js`)
+
+- MCP server integration
+- Tool registration and execution
+- AI agent with tool usage
+- Streaming responses
+- Comprehensive error handling
+
+### 📚 Examples
+
+#### Basic Usage Examples (`examples/basic-usage.js`)
+
+- Simple text completion
+- Chat conversations
+- Code generation
+- Text analysis
+- Creative writing
+
+#### MCP Integration Examples (`examples/mcp-integration.js`)
+
+- Tool registration and usage
+- Data processing tools
+- AI agent with tool capabilities
+- Multi-step workflows
+- Error handling patterns
+
+#### Cat Facts Demo (`examples/cat-facts-demo.js`)
+
+- Danny's Cat Facts MCP server integration
+- Random cat fact retrieval
+- Category-based fact filtering
+- AI-powered fact explanations
+- Story generation using cat facts
+- Interactive quiz functionality
+
+## API Reference
+
+### DedalusClient
 
 ```javascript
-import { DedalusClient } from 'dedalus-labs';
+import { DedalusClient } from "dedalus-labs";
 
 const client = new DedalusClient({
   apiKey: process.env.DEDALUS_API_KEY,
-  baseUrl: 'https://api.dedaluslabs.ai'
+  baseUrl: "https://api.dedaluslabs.ai",
 });
 
 const response = await client.complete({
-  prompt: 'Explain quantum computing in simple terms',
-  model: 'gpt-3.5-turbo',
+  prompt: "Explain quantum computing in simple terms",
+  model: "gpt-3.5-turbo",
   maxTokens: 200,
-  temperature: 0.7
+  temperature: 0.7,
 });
 
 console.log(response.text);
@@ -98,12 +140,12 @@ console.log(response.text);
 ```javascript
 const chatResponse = await client.chat({
   messages: [
-    { role: 'user', content: 'What is machine learning?' },
-    { role: 'assistant', content: 'Machine learning is...' },
-    { role: 'user', content: 'How does it differ from AI?' }
+    { role: "user", content: "What is machine learning?" },
+    { role: "assistant", content: "Machine learning is..." },
+    { role: "user", content: "How does it differ from AI?" },
   ],
-  model: 'gpt-4',
-  maxTokens: 300
+  model: "gpt-4",
+  maxTokens: 300,
 });
 
 console.log(chatResponse.message);
@@ -112,59 +154,63 @@ console.log(chatResponse.message);
 ### MCP Server with Custom Tools
 
 ```javascript
-import { MCPServer } from 'dedalus-labs-mcp';
+import { MCPServer } from "dedalus-labs-mcp";
 
 const server = new MCPServer({
-  name: 'my-ai-server',
-  version: '1.0.0'
+  name: "my-ai-server",
+  version: "1.0.0",
 });
 
 // Register a custom tool
-server.registerTool('weather', {
-  description: 'Get current weather information',
-  parameters: {
-    type: 'object',
-    properties: {
-      location: { type: 'string', description: 'City name' }
+server.registerTool(
+  "weather",
+  {
+    description: "Get current weather information",
+    parameters: {
+      type: "object",
+      properties: {
+        location: { type: "string", description: "City name" },
+      },
+      required: ["location"],
     },
-    required: ['location']
+  },
+  async (params) => {
+    // Your tool implementation
+    return { location: params.location, temp: "22°C", condition: "Sunny" };
   }
-}, async (params) => {
-  // Your tool implementation
-  return { location: params.location, temp: '22°C', condition: 'Sunny' };
-});
+);
 
 // Execute the tool
-const result = await server.executeTool('weather', { location: 'San Francisco' });
+const result = await server.executeTool("weather", { location: "San Francisco" });
 ```
 
 ### Streaming Responses
 
 ```javascript
 const stream = await client.completeStream({
-  prompt: 'Write a creative story about space exploration',
-  model: 'gpt-3.5-turbo',
-  maxTokens: 500
+  prompt: "Write a creative story about space exploration",
+  model: "gpt-3.5-turbo",
+  maxTokens: 500,
 });
 
 for await (const chunk of stream) {
-  process.stdout.write(chunk.text || '');
+  process.stdout.write(chunk.text || "");
 }
 ```
 
 ## Available Scripts
 
 - `npm start` - Run basic demo
-- `npm run demo` - Run advanced MCP demo  
+- `npm run demo` - Run advanced MCP demo
 - `npm run dev` - Run in development mode with auto-reload
 
 ## Environment Variables
 
-| Variable | Description | Required | Default |
-|----------|-------------|----------|---------|
-| `DEDALUS_API_KEY` | Your Dedalus Labs API key | Yes | - |
-| `DEDALUS_BASE_URL` | API base URL | No | `https://api.dedaluslabs.ai` |
-| `DEBUG` | Enable debug logging | No | `false` |
+| Variable           | Description               | Required | Default                      |
+| ------------------ | ------------------------- | -------- | ---------------------------- |
+| `DEDALUS_API_KEY`  | Your Dedalus Labs API key | Yes      | -                            |
+| `DEDALUS_BASE_URL` | API base URL              | No       | `https://api.dedaluslabs.ai` |
+| `DEBUG`            | Enable debug logging      | No       | `false`                      |
 
 ## Supported Models
 
@@ -224,23 +270,29 @@ node examples/mcp-integration.js
 ### Common Issues
 
 **API Key Error**
+
 ```
 Error: Invalid API key
 ```
+
 - Verify your `DEDALUS_API_KEY` is set correctly in `.env`
 - Check that the key is active in your [Dedalus Labs dashboard](https://www.dedaluslabs.ai/dashboard/servers)
 
 **Model Not Found**
+
 ```
 Error: Model 'gpt-5' not found
 ```
+
 - Check available models with `client.models.list()`
 - Verify model names in the [supported models documentation](https://docs.dedaluslabs.ai/providers)
 
 **Network Errors**
+
 ```
 Error: Network request failed
 ```
+
 - Check your internet connection
 - Verify firewall settings
 - Try increasing timeout values
