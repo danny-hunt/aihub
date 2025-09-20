@@ -1,0 +1,29 @@
+{
+  "name": "dedalus-labs-demo",
+  "version": "1.0.0",
+  "description": "Demo application showcasing Dedalus Labs MCP gateway integration",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js",
+    "demo": "node src/demo.js"
+  },
+  "keywords": [
+    "dedalus",
+    "mcp",
+    "ai",
+    "gateway",
+    "demo"
+  ],
+  "author": "Demo User",
+  "license": "MIT",
+  "dependencies": {
+    "dedalus-labs": "^0.1.0-alpha.4",
+    "dedalus-labs-mcp": "^0.1.0-alpha.4",
+    "dotenv": "^16.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0"
+  }
+}
