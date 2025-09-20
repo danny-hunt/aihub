@@ -4,7 +4,7 @@ This demo showcases how to use the **danny/cat-facts** MCP server through Dedalu
 
 ## 🐱 What is Danny's Cat Facts MCP Server?
 
-Danny's Cat Facts MCP Server is a specialized Model Context Protocol (MCP) server that provides access to a curated collection of cat facts. It's designed to be used through Dedalus Labs' unified MCP gateway, allowing AI applications to easily access cat-related information.
+Danny's Cat Facts MCP Server is a specialized Model Context Protocol (MCP) server that provides access to a curated collection of cat facts. It's hosted on Dedalus Labs' unified MCP gateway, allowing AI applications to easily access cat-related information through a simple API integration.
 
 ## 🚀 Quick Start
 
@@ -48,6 +48,7 @@ node examples/cat-facts-demo.js
 ```bash
 npm run cat-facts-demo
 ```
+
 
 ## 🎯 Demo Features
 
@@ -112,27 +113,25 @@ console.log(story.story); // AI-generated story incorporating cat facts
 
 ### MCP Server Integration
 
-The demo uses Dedalus Labs' MCP gateway to connect to Danny's cat facts server:
+The demo uses Dedalus Labs' MCP gateway to connect to the hosted Danny's cat facts server:
 
 ```javascript
-// Register the cat facts tool
-mcpServer.registerTool('get_cat_fact', {
-  description: 'Get a random cat fact from Danny\'s Cat Facts MCP Server',
-  parameters: {
-    type: 'object',
-    properties: {
-      category: { 
-        type: 'string', 
-        description: 'Category of cat fact (optional)',
-        enum: ['general', 'behavior', 'history', 'science', 'funny']
-      }
-    },
-    required: []
-  }
-}, async (params) => {
-  // Tool implementation that calls Danny's MCP server
+// Use Dedalus Labs chat completion with MCP server integration
+const response = await this.client.chat.create({
+  messages: [
+    {
+      role: 'user',
+      content: `Get a random cat fact${params.category ? ` about ${params.category}` : ''}. Return only the fact as a simple string.`
+    }
+  ],
+  model: 'gpt-3.5-turbo',
+  max_tokens: 100,
+  temperature: 0.8,
+  mcp_servers: ['danny/cat-facts'] // Use the hosted danny/cat-facts MCP server
 });
 ```
+
+The integration includes automatic fallback to local data if the hosted MCP server is unavailable, ensuring reliability.
 
 ### Available Categories
 
@@ -187,7 +186,7 @@ You can extend the demo by:
    ```
    Error: Failed to connect to MCP server
    ```
-   **Solution:** Verify you have access to the danny/cat-facts MCP server through Dedalus Labs
+   **Solution:** The demo includes automatic fallback to local data. Verify you have access to the danny/cat-facts MCP server through Dedalus Labs, or the demo will use fallback data.
 
 3. **Network Errors**
    ```

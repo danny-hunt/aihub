@@ -12,27 +12,6 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-// Mock MCP Server implementation for demonstration
-class MockMCPServer {
-  constructor(config) {
-    this.name = config.name;
-    this.version = config.version;
-    this.tools = new Map();
-  }
-
-  registerTool(name, schema, handler) {
-    this.tools.set(name, { schema, handler });
-  }
-
-  async executeTool(name, params) {
-    const tool = this.tools.get(name);
-    if (!tool) {
-      throw new Error(`Tool '${name}' not found`);
-    }
-    return await tool.handler(params);
-  }
-}
-
 class CatFactsDemo {
   constructor() {
     // Initialize the Dedalus client
@@ -40,37 +19,39 @@ class CatFactsDemo {
       apiKey: process.env.DEDALUS_API_KEY || 'your-api-key-here',
       baseUrl: process.env.DEDALUS_BASE_URL || 'https://api.dedaluslabs.ai'
     });
-    
-    // Initialize mock MCP server for cat facts
-    this.mcpServer = new MockMCPServer({
-      name: 'cat-facts-demo-server',
-      version: '1.0.0'
-    });
   }
 
   /**
-   * Register the cat facts tool from danny/cat-facts MCP server
+   * Get a cat fact from the hosted danny/cat-facts MCP server
    */
-  async setupCatFactsTool() {
-    console.log('🐱 Setting up Cat Facts MCP Server...');
-    
-    // Register the cat facts tool
-    // This simulates connecting to the danny/cat-facts MCP server
-    this.mcpServer.registerTool('get_cat_fact', {
-      description: 'Get a random cat fact from Danny\'s Cat Facts MCP Server',
-      parameters: {
-        type: 'object',
-        properties: {
-          category: { 
-            type: 'string', 
-            description: 'Category of cat fact (optional)',
-            enum: ['general', 'behavior', 'history', 'science', 'funny']
+  async getCatFactFromMCPServer(category = 'general') {
+    try {
+      // Use Dedalus Labs chat completion with MCP server integration
+      const response = await this.client.chat.create({
+        messages: [
+          {
+            role: 'user',
+            content: `Get a random cat fact${category ? ` about ${category}` : ''}. Return only the fact as a simple string.`
           }
-        },
-        required: []
-      }
-    }, async (params) => {
-      // Simulate calling the danny/cat-facts MCP server
+        ],
+        model: 'gpt-3.5-turbo',
+        max_tokens: 100,
+        temperature: 0.8,
+        mcp_servers: ['danny/cat-facts'] // Use the hosted danny/cat-facts MCP server
+      });
+
+      const fact = response.choices[0].message.content.trim();
+      
+      return {
+        fact: fact,
+        category: category,
+        source: 'danny/cat-facts MCP Server (via Dedalus Labs)',
+        timestamp: new Date().toISOString()
+      };
+    } catch (error) {
+      console.warn('⚠️ MCP server call failed, using fallback data:', error.message);
+      
+      // Fallback to local data if MCP server is unavailable
       const catFacts = {
         general: [
           "Cats spend 70% of their lives sleeping.",
@@ -104,19 +85,16 @@ class CatFactsDemo {
         ]
       };
 
-      const category = params.category || 'general';
       const facts = catFacts[category] || catFacts.general;
       const randomFact = facts[Math.floor(Math.random() * facts.length)];
       
       return {
         fact: randomFact,
         category: category,
-        source: 'danny/cat-facts MCP Server',
+        source: 'danny/cat-facts MCP Server (fallback)',
         timestamp: new Date().toISOString()
       };
-    });
-
-    console.log('✅ Cat Facts tool registered successfully!');
+    }
   }
 
   /**
@@ -126,7 +104,7 @@ class CatFactsDemo {
     console.log('\n🐾 Fetching a random cat fact...');
     
     try {
-      const result = await this.mcpServer.executeTool('get_cat_fact', {});
+      const result = await this.getCatFactFromMCPServer();
       console.log('📋 Cat Fact:');
       console.log(`   ${result.fact}`);
       console.log(`   Category: ${result.category}`);
@@ -145,7 +123,7 @@ class CatFactsDemo {
     console.log(`\n🐾 Fetching a ${category} cat fact...`);
     
     try {
-      const result = await this.mcpServer.executeTool('get_cat_fact', { category });
+      const result = await this.getCatFactFromMCPServer(category);
       console.log(`📋 ${category.charAt(0).toUpperCase() + category.slice(1)} Cat Fact:`);
       console.log(`   ${result.fact}`);
       console.log(`   Source: ${result.source}`);
@@ -306,8 +284,8 @@ class CatFactsDemo {
       const q = quizQuestions[i];
       console.log(`\nQuestion ${i + 1}: ${q.question}`);
       
-      // Simulate getting the answer from the MCP server
-      const result = await this.mcpServer.executeTool('get_cat_fact', { category: 'general' });
+      // Get a fact from the MCP server
+      const result = await this.getCatFactFromMCPServer('general');
       
       // Check if the fact contains the answer (simplified check)
       const containsAnswer = result.fact.toLowerCase().includes(q.correctAnswer.toLowerCase());
@@ -334,8 +312,7 @@ class CatFactsDemo {
     console.log('=' .repeat(60));
     
     try {
-      // Setup the cat facts tool
-      await this.setupCatFactsTool();
+      console.log('🐱 Starting Cat Facts Demo with Dedalus Labs MCP Integration\n');
       
       // Demo 1: Get random cat facts
       console.log('\n1. Random Cat Facts:');
